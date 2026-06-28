@@ -10,9 +10,7 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({
-      error: 'GEMINI_API_KEY is not set in Vercel Environment Variables.'
-    });
+    return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel Environment Variables.' });
   }
 
   const SARA_PROMPT = `You are Sara, a friendly booking agent for CarTest.pk — Pakistan's doorstep car inspection service in Karachi.
@@ -36,10 +34,9 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
   try {
     const { messages } = req.body;
 
-    // Build Gemini contents with system as first exchange
     const contents = [
       { role: 'user', parts: [{ text: 'Instructions: ' + SARA_PROMPT }] },
-      { role: 'model', parts: [{ text: 'Understood! I am Sara from CarTest.pk, ready to help customers book car inspections.' }] }
+      { role: 'model', parts: [{ text: 'Understood! I am Sara from CarTest.pk, ready to help.' }] }
     ];
 
     for (const m of (messages || [])) {
@@ -54,48 +51,69 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
       generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
     });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Try models one by one until one works
+    const models = [
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash-001',
+      'gemini-1.5-pro-latest',
+      'gemini-1.0-pro'
+    ];
 
-    // Use native https to avoid any fetch issues
-    const reply = await new Promise((resolve, reject) => {
-      const urlObj = new URL(url);
-      const options = {
-        hostname: urlObj.hostname,
-        path: urlObj.pathname + urlObj.search,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body)
-        }
-      };
+    let lastError = '';
 
-      const reqHttp = https.request(options, (response) => {
-        let data = '';
-        response.on('data', chunk => data += chunk);
-        response.on('end', () => {
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.error) {
-              reject(new Error(parsed.error.message + ' (code: ' + parsed.error.code + ')'));
-            } else {
-              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) resolve(text);
-              else reject(new Error('Empty response from Gemini. Raw: ' + data.slice(0, 300)));
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const reply = await new Promise((resolve, reject) => {
+          const urlObj = new URL(url);
+          const options = {
+            hostname: urlObj.hostname,
+            path: urlObj.pathname + urlObj.search,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(body)
             }
-          } catch (e) {
-            reject(new Error('JSON parse error: ' + e.message + ' | Raw: ' + data.slice(0, 200)));
-          }
+          };
+
+          const reqHttp = https.request(options, (response) => {
+            let data = '';
+            response.on('data', chunk => data += chunk);
+            response.on('end', () => {
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.error) {
+                  reject(new Error(`[${model}] ${parsed.error.message} (${parsed.error.code})`));
+                } else {
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (text) resolve(text);
+                  else reject(new Error(`[${model}] Empty response: ` + data.slice(0, 200)));
+                }
+              } catch (e) {
+                reject(new Error(`[${model}] Parse error: ` + e.message));
+              }
+            });
+          });
+
+          reqHttp.on('error', e => reject(new Error(`[${model}] HTTPS error: ` + e.message)));
+          reqHttp.write(body);
+          reqHttp.end();
         });
-      });
 
-      reqHttp.on('error', e => reject(new Error('HTTPS error: ' + e.message)));
-      reqHttp.write(body);
-      reqHttp.end();
-    });
+        // If we got here, it worked
+        return res.status(200).json({ reply, model_used: model });
 
-    return res.status(200).json({ reply });
+      } catch (e) {
+        lastError = e.message;
+        continue; // try next model
+      }
+    }
+
+    // All models failed
+    return res.status(500).json({ error: 'All models failed. Last error: ' + lastError });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Server error: ' + err.message });
   }
 };
