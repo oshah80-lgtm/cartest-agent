@@ -53,11 +53,10 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
 
     // Try models one by one until one works
     const models = [
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-flash-001',
-      'gemini-1.5-pro-latest',
-      'gemini-1.0-pro'
-    ];
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-flash'
+];
 
     let lastError = '';
 
