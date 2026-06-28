@@ -54,7 +54,7 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
       generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
     });
 
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     // Use native https to avoid any fetch issues
     const reply = await new Promise((resolve, reject) => {
