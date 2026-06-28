@@ -51,12 +51,12 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
       generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
     });
 
-    // Try models one by one until one works
+    // Updated model names from Google's official docs (June 2025)
     const models = [
-  'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-1.5-flash'
-];
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash-lite'
+    ];
 
     let lastError = '';
 
@@ -100,16 +100,14 @@ BOOKING_JSON:{"name":"x","car":"x","package":"x","date":"x","time":"x","location
           reqHttp.end();
         });
 
-        // If we got here, it worked
         return res.status(200).json({ reply, model_used: model });
 
       } catch (e) {
         lastError = e.message;
-        continue; // try next model
+        continue;
       }
     }
 
-    // All models failed
     return res.status(500).json({ error: 'All models failed. Last error: ' + lastError });
 
   } catch (err) {
