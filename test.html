@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>API Test — CarTest.pk</title>
+  <style>
+    body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 20px; background: #f8fafc; }
+    h2 { margin-bottom: 6px; color: #0f172a; }
+    p  { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+    button { background:#0f172a; color:white; border:none; padding:12px 28px; border-radius:8px; font-size:15px; cursor:pointer; margin-bottom:16px; display:block; }
+    #out { background:white; border:1px solid #ddd; border-radius:10px; padding:16px; font-size:13px; white-space:pre-wrap; min-height:80px; line-height:1.8; color:#1e293b; }
+    .ok  { background:#f0fdf4!important; border-color:#86efac!important; color:#166534!important; }
+    .err { background:#fef2f2!important; border-color:#fca5a5!important; color:#7f1d1d!important; }
+  </style>
+</head>
+<body>
+  <h2>🔧 CarTest.pk — API Diagnostic</h2>
+  <p>Click the button and copy the full result to share with support.</p>
+  <button onclick="runTest()">▶ Run Test</button>
+  <div id="out">Click the button above to start test...</div>
+  <br><a href="/">← Back to Agent</a>
+
+<script>
+async function runTest() {
+  const out = document.getElementById('out');
+  out.className = '';
+  out.textContent = '⏳ Testing /api/chat ...';
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'Say exactly: connection ok' }] })
+    });
+    const statusCode = r.status;
+    const rawText = await r.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) {
+      out.className = 'err';
+      out.textContent = '❌ HTTP ' + statusCode + ' — Server returned non-JSON:\n\n' + rawText;
+      return;
+    }
+    if (data.error) {
+      out.className = 'err';
+      out.textContent = '❌ HTTP ' + statusCode + ' — Error from server:\n\n' + data.error + '\n\n👉 Copy this message and share it for support.';
+    } else if (data.reply) {
+      out.className = 'ok';
+      out.textContent = '✅ SUCCESS! Everything is working.\n\nGemini replied: "' + data.reply + '"\n\nYour agent is ready to use!';
+    } else {
+      out.className = 'err';
+      out.textContent = '⚠️ Unexpected response (HTTP ' + statusCode + '):\n\n' + JSON.stringify(data, null, 2);
+    }
+  } catch(e) {
+    out.className = 'err';
+    out.textContent = '❌ Network/fetch error:\n\n' + e.message;
+  }
+}
+</script>
+</body>
+</html>

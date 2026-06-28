@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CarTest.pk — Book Inspection</title>
+  <link rel="icon" href="https://www.cartest.pk/assets/frontend/img/logo.png" type="image/png"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .wrapper { width: 100%; max-width: 460px; }
+    .header {
+      background: #0f172a; border-radius: 16px 16px 0 0;
+      padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .logo-wrap {
+      width: 42px; height: 42px; background: white; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+    }
+    .logo-wrap img { width: 38px; height: 38px; object-fit: contain; }
+    .header-text { flex: 1; }
+    .header-text h1 { color: #f1f5f9; font-size: 15px; font-weight: 600; }
+    .header-text p  { color: #64748b; font-size: 12px; margin-top: 2px; }
+    .online-badge { display: flex; align-items: center; gap: 5px; background: #052e16; border-radius: 20px; padding: 4px 10px; }
+    .online-badge span { color: #22c55e; font-size: 11px; font-weight: 500; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .chat-wrap { background: #f8fafc; display: flex; flex-direction: column; height: 72vh; max-height: 640px; }
+    .chat-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+    .bubble { display: flex; flex-direction: column; max-width: 88%; gap: 3px; }
+    .bubble.agent { align-self: flex-start; }
+    .bubble.user  { align-self: flex-end; }
+    .bubble .sender { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+    .bubble.user .sender { text-align: right; }
+    .bubble .text { padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.6; }
+    .bubble.agent .text { background: white; color: #1e293b; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .bubble.user  .text { background: #0f172a; color: #f1f5f9; border-bottom-right-radius: 4px; }
+    .bubble .ts { font-size: 10px; color: #cbd5e1; }
+    .bubble.user .ts { text-align: right; }
+    .typing { align-self: flex-start; background: white; border: 1px solid #e2e8f0; border-radius: 18px; border-bottom-left-radius: 4px; padding: 12px 16px; display: flex; gap: 5px; align-items: center; }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: bounce 1.2s infinite; }
+    .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }
+    .qr-area { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    .qr { background: white; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #334155; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .qr:hover { background: #0f172a; color: white; border-color: #0f172a; }
+    .input-row { display: flex; gap: 8px; padding: 10px 14px 12px; background: white; border-top: 1px solid #e2e8f0; border-radius: 0 0 16px 16px; }
+    .input-row input { flex: 1; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 24px; padding: 10px 16px; font-size: 14px; color: #1e293b; outline: none; font-family: inherit; }
+    .input-row input:focus { border-color: #0f172a; background: white; }
+    .send-btn { width: 42px; height: 42px; background: #0f172a; color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .booking-card { margin-top: 8px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 14px; font-size: 13px; }
+    .booking-card h4 { color: #166534; font-size: 14px; margin-bottom: 10px; }
+    .brow { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #dcfce7; }
+    .brow:last-of-type { border-bottom: none; }
+    .blbl { color: #64748b; min-width: 75px; font-size: 12px; }
+    .bval { font-weight: 500; font-size: 13px; color: #1e293b; }
+    .wa-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: #22c55e; color: white; border: none; border-radius: 24px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; margin-top: 12px; width: 100%; font-family: inherit; }
+    .wa-btn:hover { background: #16a34a; }
+    .err-box { align-self: flex-start; max-width: 90%; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; padding: 10px 14px; font-size: 12px; color: #7f1d1d; line-height: 1.6; }
+    .err-box a { color: #991b1b; }
+    .footer { text-align: center; margin-top: 10px; font-size: 11px; color: #475569; }
+    .footer a { color: #94a3b8; text-decoration: none; }
+    @media (max-width: 480px) {
+      body { padding: 0; justify-content: flex-start; background: #f8fafc; }
+      .wrapper { max-width: 100%; }
+      .header { border-radius: 0; }
+      .chat-wrap { height: 100vh; max-height: none; }
+      .input-row { border-radius: 0; padding-bottom: 20px; }
+      .footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="logo-wrap">
+      <img src="https://www.cartest.pk/assets/frontend/img/logo.png" alt="CarTest.pk" onerror="this.style.display='none'"/>
+    </div>
+    <div class="header-text">
+      <h1>CarTest.pk — Book Inspection</h1>
+      <p>Doorstep car inspection · Karachi</p>
+    </div>
+    <div class="online-badge"><div class="dot"></div><span>Online</span></div>
+  </div>
+  <div class="chat-wrap">
+    <div class="chat-area" id="chat"></div>
+    <div class="qr-area" id="qr-area"></div>
+    <div class="input-row">
+      <input type="text" id="user-input" placeholder="Type your message…" autocomplete="off"/>
+      <button class="send-btn" id="send-btn">&#9658;</button>
+    </div>
+  </div>
+  <div class="footer">
+    Powered by AI &nbsp;·&nbsp; <a href="https://www.cartest.pk" target="_blank">cartest.pk</a>
+    &nbsp;·&nbsp; 📞 <a href="tel:03330252184">03330252184</a>
+    &nbsp;·&nbsp; <a href="https://wa.me/923330252184" target="_blank">WhatsApp</a>
+    &nbsp;·&nbsp; <a href="/test.html">Diagnose</a>
+  </div>
+</div>
+<script>
+  let history = [], booking = {}, busy = false;
+  const getTime = () => new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  const scrollBottom = () => { const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight; };
+
+  function addBubble(role, text) {
+    const chat = document.getElementById('chat');
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble ' + role;
+    const bMatch = text.match(/BOOKING_JSON:(\{[\s\S]*?\})/);
+    const clean = text.replace(/BOOKING_JSON:\{[\s\S]*?\}/,'').trim();
+    if (role === 'agent') {
+      wrap.innerHTML = `<div class="sender">Sara · CarTest.pk</div><div class="text">${clean.replace(/\n/g,'<br>')}</div><div class="ts">${getTime()}</div>`;
+      chat.appendChild(wrap);
+      if (bMatch) {
+        try {
+          const b = JSON.parse(bMatch[1]); booking = b;
+          const wa = encodeURIComponent(`Assalam o Alaikum CarTest.pk!\n\nBooking:\n👤 ${b.name}\n🚗 ${b.car}\n📦 ${b.package}\n📅 ${b.date}\n🕐 ${b.time}\n📍 ${b.location}\n📱 ${b.phone}\n\nPlease confirm. Shukria!`);
+          const card = document.createElement('div'); card.className = 'booking-card';
+          card.innerHTML = `<h4>✅ Booking Summary</h4>
+            <div class="brow"><span class="blbl">Name</span><span class="bval">${b.name||'—'}</span></div>
+            <div class="brow"><span class="blbl">Car</span><span class="bval">${b.car||'—'}</span></div>
+            <div class="brow"><span class="blbl">Package</span><span class="bval">${b.package||'—'}</span></div>
+            <div class="brow"><span class="blbl">Date</span><span class="bval">${b.date||'—'}</span></div>
+            <div class="brow"><span class="blbl">Time</span><span class="bval">${b.time||'—'}</span></div>
+            <div class="brow"><span class="blbl">Location</span><span class="bval">${b.location||'—'}</span></div>
+            <div class="brow"><span class="blbl">Phone</span><span class="bval">${b.phone||'—'}</span></div>
+            <a class="wa-btn" href="https://wa.me/923330252184?text=${wa}" target="_blank">💬 Confirm on WhatsApp</a>`;
+          wrap.appendChild(card); setQR([]);
+        } catch(e){}
+      }
+    } else {
+      wrap.innerHTML = `<div class="sender" style="text-align:right">You</div><div class="text">${text.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div><div class="ts">${getTime()}</div>`;
+      chat.appendChild(wrap);
+    }
+    scrollBottom();
+  }
+
+  function addError(msg) {
+    const chat = document.getElementById('chat');
+    const d = document.createElement('div'); d.className = 'err-box';
+    d.innerHTML = '⚠️ <b>Error:</b> ' + msg + '<br><br>→ <a href="/test.html">Open diagnostic page</a>';
+    chat.appendChild(d); scrollBottom();
+  }
+
+  function showTyping() {
+    removeTyping();
+    const t = document.createElement('div'); t.className='typing'; t.id='ti';
+    t.innerHTML='<span></span><span></span><span></span>';
+    document.getElementById('chat').appendChild(t); scrollBottom();
+  }
+  function removeTyping() { const t=document.getElementById('ti'); if(t)t.remove(); }
+
+  function setQR(list) {
+    const a = document.getElementById('qr-area'); a.innerHTML='';
+    list.forEach(r => { const b=document.createElement('button'); b.className='qr'; b.textContent=r; b.onclick=()=>sendMessage(r); a.appendChild(b); });
+  }
+
+  function smartQR() {
+    if (booking.phone)    return setQR(['Thank you!','Change date?','What to prepare?']);
+    if (booking.location) return setQR(['0300-1234567','0311-1234567','0321-1234567','0333-1234567']);
+    if (booking.time)     return setQR(['DHA','Clifton','Gulshan-e-Iqbal','North Nazimabad','Saddar']);
+    if (booking.date)     return setQR(['Morning 9-11 AM','Afternoon 12-2 PM','Evening 3-5 PM']);
+    if (booking.package)  return setQR(['Tomorrow','This Saturday','Next Monday','Next Tuesday']);
+    if (booking.car)      return setQR(['Silver PKR 3,999','Gold PKR 3,299','Diamond PKR 2,999','Economy PKR 9,999']);
+    if (booking.name)     return setQR(['Toyota Corolla 2018','Honda Civic 2019','Suzuki Alto 2022','Honda City 2020']);
+    setQR(['Book inspection','View packages','How does it work?','Areas covered?']);
+  }
+
+  async function callAPI(userMsg) {
+    if (userMsg) history.push({role:'user', content:userMsg});
+    busy = true; document.getElementById('send-btn').disabled = true;
+    showTyping();
+    try {
+      const resp = await fetch('/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({messages: history})
+      });
+      const raw = await resp.text();
+      removeTyping(); busy=false; document.getElementById('send-btn').disabled=false;
+      let data;
+      try { data = JSON.parse(raw); } catch(e) { addError('Bad response: ' + raw.slice(0,150)); return; }
+      if (data.error) { addError(data.error); return; }
+      const reply = data.reply || 'No reply.';
+      history.push({role:'assistant', content:reply});
+      addBubble('agent', reply);
+      smartQR();
+    } catch(e) {
+      removeTyping(); busy=false; document.getElementById('send-btn').disabled=false;
+      addError('Network error: ' + e.message);
+    }
+  }
+
+  function sendMessage(text) {
+    if (busy) return;
+    const val = text || document.getElementById('user-input').value.trim();
+    if (!val) return;
+    document.getElementById('user-input').value='';
+    setQR([]); addBubble('user', val); callAPI(val);
+  }
+
+  document.getElementById('send-btn').onclick = () => sendMessage();
+  document.getElementById('user-input').addEventListener('keydown', e => { if(e.key==='Enter'&&!busy) sendMessage(); });
+  callAPI(null);
+</script>
+</body>
+</html>
